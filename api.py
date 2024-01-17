@@ -29,11 +29,7 @@ async def ai_question(cid: str):
     r = requests.post("http://localhost:11434/api/generate", json=curl_data)
     resume = r.json()['response']
 
-    # Use BeautifulSoup to clean up and validate HTML syntax
-    # cleaned_resume = BeautifulSoup(resume, "html.parser").prettify()
-
-
-    output = {"input" : weekjson, "tellme" : resume}
+    output = {"system" : curl_data['system'], "prompt" : curl_data['prompt'], "tellme" : resume}
     return output
 
 
