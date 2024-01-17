@@ -12,7 +12,7 @@ model = whisper.load_model("base")
 async def ai_question(cid: str):
     curl_data= {
       "model" : "mistral",
-      "system" : "You are in charge to receive json extracted from TiddlyWiki, entries are called tiddlers. Always return answer in the desired asked format",
+      "system" : "You are a scribe. You are in charge to receive ipfs content, it can be provided in html, text or json. You have to understand what you are reading and explain what it is about. Always return answer in the desired asked format",
       "prompt" : "From this input : {}, remove html tagging, separate fields if it is json and tell what you understand from 'text' contents you read. make your response in txt raw form",
       "stream" : False
     }
