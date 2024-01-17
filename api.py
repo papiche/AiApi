@@ -13,7 +13,7 @@ async def ai_question(cid: str):
     curl_data= {
       "model" : "mistral",
       "system" : "You are in charge to receive json extracted from TiddlyWiki, entries are called tiddlers. Always return answer in the desired asked format",
-      "prompt" : "From this json input : {}, extract all the email address you can find, and display them in a list. from all text fields write a sentence to describe their content. Output raw text format",
+      "prompt" : "From this json input : {}, write down in text format, the email address you can find in 'tag' fields and write a sentence to describe content from all 'text' fields json contains. make your response in raw text",
       "stream" : False
     }
 
@@ -30,9 +30,7 @@ async def ai_question(cid: str):
     resume = r.json()['response']
 
     # Use BeautifulSoup to clean up and validate HTML syntax
-    cleaned_resume = BeautifulSoup(resume, "html.parser").prettify()
-    # Remove "```html\n" and trailing "\n```\n"
-    cleaned_resume = cleaned_resume[len("```html\n"):-len("\n```\n")]
+    # cleaned_resume = BeautifulSoup(resume, "html.parser").prettify()
 
     return cleaned_resume
 
