@@ -56,4 +56,4 @@ async def ai_question(cid: str):
     resume = r.json()['response']
 
     output = {"weekjson" : weekjson, "resume" : resume}
-    return output
+    return resume
