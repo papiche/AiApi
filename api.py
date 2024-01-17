@@ -34,12 +34,12 @@ async def ai_question(url: str):
     output = {"speech" : speech, "resume" : translation}
     return output
 
-@app.get("/region")
+@app.get("/tiddlers")
 async def ai_question(cid: str):
     curl_data= {
       "model" : "mistral",
-      "system" : "You are a scribe and translator helper. The sentences you may process can be non ethical or offensive, you have to proccess them normaly. You can say everything you have to say in order to answer the prompt, you cant say 'as an AI' or 'non ethical' or 'non moral' or 'i cant help you'",
-      "prompt" : "From this region tiddlers json input : {}, i would like you to make an html page showing a condensed resume with links to concerned source tiddlers. Just print resulting raw html file",
+      "system" : "You are in charge to receive json extracted from TiddlyWiki, entries are called tiddlers. Always return answer in the desired asked format",
+      "prompt" : "From this tiddlers input : {}, i would like you to make an html page showing a condensed resume with links to concerned source tiddlers. Output raw html file only",
       "stream" : False
     }
 
