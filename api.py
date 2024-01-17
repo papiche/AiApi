@@ -44,13 +44,12 @@ async def ai_question(cid: str):
     }
 
     # Get json form received RWEEKCID
-    weekjson = subprocess.run(["ipfs", "cat", cid])
+    result = subprocess.run(["ipfs", "cat", cid], capture_output=True, text=True)
 
-    #Make a resume of the json
+    # Make a resume of the json
+    weekjson = result.stdout.strip() if result.returncode == 0 else ""
     curl_data['prompt'] = curl_data['prompt'].format(weekjson)
     print(curl_data['prompt'])
-    r = requests.post("http://localhost:11434/api/generate", json=curl_data)
-    resume = r.json()['response']
 
     output = {"weekjson" : weekjson, "resume" : resume}
     return output
