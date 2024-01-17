@@ -32,7 +32,7 @@ async def ai_question(cid: str):
     # Use BeautifulSoup to clean up and validate HTML syntax
     # cleaned_resume = BeautifulSoup(resume, "html.parser").prettify()
 
-    return cleaned_resume
+    return resume
 
 
 @app.get("/resume")
