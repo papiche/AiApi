@@ -3,9 +3,37 @@ from fastapi import FastAPI
 import whisper
 import subprocess
 import requests
+from bs4 import BeautifulSoup
 
 app = FastAPI()
 model = whisper.load_model("base")
+
+@app.get("/tiddlers")
+async def ai_question(cid: str):
+    curl_data= {
+      "model" : "mistral",
+      "system" : "You are in charge to receive json extracted from TiddlyWiki, entries are called tiddlers. Always return answer in the desired asked format",
+      "prompt" : "From this tiddlers input : {}, i would like you to make an html page showing a condensed resume with links to concerned source tiddlers. Output raw html file only",
+      "stream" : False
+    }
+
+    # Get json form received RWEEKCID
+    result = subprocess.run(["ipfs", "cat", cid], capture_output=True, text=True)
+
+    # Make a resume of the json
+    weekjson = result.stdout.strip() if result.returncode == 0 else ""
+    curl_data['prompt'] = curl_data['prompt'].format(weekjson)
+
+    print(curl_data['prompt'])
+
+    r = requests.post("http://localhost:11434/api/generate", json=curl_data)
+    resume = r.json()['response']
+
+    # Use BeautifulSoup to clean up and validate HTML syntax
+    cleaned_resume = BeautifulSoup(resume, "html.parser").prettify()
+
+    return cleaned_resume
+
 
 @app.get("/resume")
 async def ai_question(url: str):
@@ -33,27 +61,3 @@ async def ai_question(url: str):
 
     output = {"speech" : speech, "resume" : translation}
     return output
-
-@app.get("/tiddlers")
-async def ai_question(cid: str):
-    curl_data= {
-      "model" : "mistral",
-      "system" : "You are in charge to receive json extracted from TiddlyWiki, entries are called tiddlers. Always return answer in the desired asked format",
-      "prompt" : "From this tiddlers input : {}, i would like you to make an html page showing a condensed resume with links to concerned source tiddlers. Output raw html file only",
-      "stream" : False
-    }
-
-    # Get json form received RWEEKCID
-    result = subprocess.run(["ipfs", "cat", cid], capture_output=True, text=True)
-
-    # Make a resume of the json
-    weekjson = result.stdout.strip() if result.returncode == 0 else ""
-    curl_data['prompt'] = curl_data['prompt'].format(weekjson)
-
-    print(curl_data['prompt'])
-
-    r = requests.post("http://localhost:11434/api/generate", json=curl_data)
-    resume = r.json()['response']
-
-    output = {"weekjson" : weekjson, "resume" : resume}
-    return resume
