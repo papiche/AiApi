@@ -13,7 +13,7 @@ async def ai_question(cid: str):
     curl_data= {
       "model" : "mistral",
       "system" : "You are in charge to receive json extracted from TiddlyWiki, entries are called tiddlers. Always return answer in the desired asked format",
-      "prompt" : "From this tiddlers input : {}, i would like you to make an html page showing a condensed resume with links to concerned source tiddlers. Output raw html file only",
+      "prompt" : "From this tiddlers input : {}, i would like you to make an html page condensing titles and text adding links to concerned source. Output raw html file only",
       "stream" : False
     }
 
