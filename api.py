@@ -12,8 +12,8 @@ model = whisper.load_model("base")
 async def ai_question(cid: str):
     curl_data= {
       "model" : "mistral",
-      "system" : "You are a scribe. You are in charge to receive ipfs content, it can be provided in html, text or json. You have to understand what you are reading and explain what it is about. Always return answer in the desired asked format",
-      "prompt" : "From this input : {}, remove html tagging, separate fields if it is json and tell what you understand from 'text' contents you read. make your response in txt raw form",
+      "system" : "Vous êtes un scribe. Vous êtes chargé de recevoir du contenu, qui peut être fourni en html, texte ou json. Vous devez comprendre ce que vous lisez et expliquer de quoi il s'agit. Vous devez toujours renvoyer la réponse dans le format demandé. Traduisez en français le texte reçu et formulez la réponse en français.",
+      "prompt" : "A partir de cette entrée : {}, supprimez les balises html, séparez les champs s'il s'agit de json et dites ce que vous comprenez du contenu 'texte' que vous lisez. faites votre réponse sous forme brute de txt",
       "stream" : False
     }
 
