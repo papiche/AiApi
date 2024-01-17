@@ -8,12 +8,12 @@ from bs4 import BeautifulSoup
 app = FastAPI()
 model = whisper.load_model("base")
 
-@app.get("/tiddlers")
+@app.get("/tellme")
 async def ai_question(cid: str):
     curl_data= {
       "model" : "mistral",
       "system" : "You are in charge to receive json extracted from TiddlyWiki, entries are called tiddlers. Always return answer in the desired asked format",
-      "prompt" : "From this json input : {}, write down in text format, the email address you can find in 'tag' fields and write a sentence to describe content from all 'text' fields json contains. make your response in raw text",
+      "prompt" : "From this input : {}, remove html tagging, separate fields if it is json and tell what you understand from 'text' contents you read. make your response in txt raw form",
       "stream" : False
     }
 
@@ -32,10 +32,12 @@ async def ai_question(cid: str):
     # Use BeautifulSoup to clean up and validate HTML syntax
     # cleaned_resume = BeautifulSoup(resume, "html.parser").prettify()
 
-    return resume
+
+    output = {"input" : weekjson, "tellme" : resume}
+    return output
 
 
-@app.get("/resume")
+@app.get("/youtube")
 async def ai_question(url: str):
     curl_data= {
       "model" : "mistral",
