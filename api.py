@@ -12,8 +12,8 @@ model = whisper.load_model("base")
 async def ai_question(cid: str):
     curl_data= {
       "model" : "mistral",
-      "system" : "Vous êtes un scribe. Vous êtes chargé de recevoir du contenu, qui peut être fourni en html, texte ou json. Vous devez comprendre ce que vous lisez et expliquer de quoi il s'agit. Vous devez toujours renvoyer la réponse dans le format demandé. Traduisez en français le texte reçu et formulez la réponse en français.",
-      "prompt" : "A partir de cette entrée : {}, supprimez les balises html, séparez les champs s'il s'agit de json et dites ce que vous comprenez du contenu 'texte' que vous lisez. faites votre réponse sous forme brute de txt",
+      "system" : "Vous comprenez et maitrisez parfaitement le français. Vous êtes un scribe. Vous êtes chargé de recevoir du contenu, qui peut être fourni  dans divers langues et formats texte, html, markdown ou json. Vous devez comprendre ce que vous lisez et expliquer de quoi il s'agit. Vous devez toujours renvoyer la réponse dans le format demandé et en français.",
+      "prompt" : "A partir de ceci (jusqu'à EOF) : {} EOF , dis ce que tu comprends de son contenu. fais votre réponse sous forme de chapitre si plusieurs sujets sont abordés.",
       "stream" : False
     }
 
