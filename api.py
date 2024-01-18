@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 app = FastAPI()
 model = whisper.load_model("base")
 
-MAX_FILE_SIZE_KB = 100
+MAX_FILE_SIZE_KB = 20
 
 @app.get("/tellme")
 async def ai_question(cid: str):
