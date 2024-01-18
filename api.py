@@ -51,7 +51,7 @@ async def ai_question(cid: str):
       "stream" : False
     }
 
-    getlog = subprocess.run(["ipfs", "get", "-o", "vlog.mp4"; cid], capture_output=True, text=True)
+    getlog = subprocess.run(["ipfs", "get", "-o", "vlog.mp4", cid], capture_output=True, text=True)
     speech = model.transcribe("vlog.mp4")['text']
     subprocess.run(["rm", "vlog.mp4"])
 
