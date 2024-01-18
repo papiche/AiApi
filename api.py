@@ -19,11 +19,11 @@ async def ai_question(cid: str):
       "stream" : False
     }
 
-    # Verify if the file contains binary data in the first 200 bytes using ipfs cat -l
-    cat_result = subprocess.run(["ipfs", "cat", "-l", "200", cid], capture_output=True, text=True, encoding='utf-8')
+    # ~ # Verify if the file contains binary data in the first 200 bytes using ipfs cat -l
+    # ~ cat_result = subprocess.run(["ipfs", "cat", "-l", "200", cid], capture_output=True, text=True, encoding='utf-8')
 
-    if "x\x00" in cat_result.stdout:
-        raise HTTPException(status_code=400, detail="File contains binary data. ERROR")
+    # ~ if "x\x00" in cat_result.stdout:
+        # ~ raise HTTPException(status_code=400, detail="File contains binary data. ERROR")
 
     # Get ipfs received CID
     result = subprocess.run(["ipfs", "cat", cid], capture_output=True, text=True)
