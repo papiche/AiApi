@@ -49,7 +49,6 @@ async def ai_question(cid: str):
 @app.get("/g1vlog")
 async def ai_question(cid: str):
     print('G1VLOG')
-
     # Verify if the file contains "x264" in the first 200 bytes
     cat_result = subprocess.run(["ipfs", "cat", "-l", "200", cid], capture_output=True, text=True)
     if "x264" not in cat_result.stdout:
@@ -76,7 +75,7 @@ async def ai_question(url: str):
 
     # Check if the video is less than 5 minutes (300 seconds)
     if duration_seconds > 300:
-        return {"error": "Video is too long. Please provide a video shorter than 3 minutes."}
+        return {"error": "Video is too long. Please provide a video shorter than 5 minutes."}
 
     curl_data= {
       "model" : "mistral",
