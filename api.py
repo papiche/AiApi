@@ -55,8 +55,6 @@ async def ai_question(cid: str):
     getlog = subprocess.run(["ipfs", "get", "-o", "vlog.mp4", cid], capture_output=True, text=True)
     print(getlog)
 
-    model = None
-    model = whisper.load_model("large")
     ## SPEECH TO TEXT
     speech = modeL.transcribe("vlog.mp4")['text']
     subprocess.run(["rm", "-Rf", "vlog.mp4"])
