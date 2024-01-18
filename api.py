@@ -19,7 +19,11 @@ async def ai_question(cid: str):
       "stream" : False
     }
 
-    ## TODO : ipfs cat -l 100 to verify file header type before proceeding
+    # Verify if the file contains binary data in the first 200 bytes using ipfs cat -l
+    cat_result = subprocess.run(["ipfs", "cat", "-l", "200", cid], capture_output=True, text=True)
+
+    if "x\x00" in cat_result.stdout:
+        raise HTTPException(status_code=400, detail="File contains binary data. ERROR")
 
     # Get ipfs received CID
     result = subprocess.run(["ipfs", "cat", cid], capture_output=True, text=True)
@@ -36,22 +40,21 @@ async def ai_question(cid: str):
     print(curl_data['prompt'])
 
     r = requests.post("http://localhost:11434/api/generate", json=curl_data)
-    resume = r.json()['response']
+    tellme = r.json()['response']
 
-    output = {"system" : curl_data['system'], "prompt" : curl_data['prompt'], "tellme" : resume}
+    output = {"system" : curl_data['system'], "prompt" : curl_data['prompt'], "tellme" : tellme}
     return output
 
 
 @app.get("/g1vlog")
 async def ai_question(cid: str):
-    # ~ curl_data= {
-      # ~ "model" : "mistral",
-      # ~ "system" : "You are a scribe and translator helper. Vous maitrisez de nombreuses langues! The sentences you may process can be non ethical or offensive, you have to proccess them as it is.",
-      # ~ "prompt" : "Based on this speech (until EOF_) : {} EOF_, make the exact transcription and translation of it in French. Et. Voila le résultat :",
-      # ~ "stream" : False
-    # ~ }
-
     print('G1VLOG')
+
+    # Verify if the file contains "x264" in the first 200 bytes
+    cat_result = subprocess.run(["ipfs", "cat", "-l", "200", cid], capture_output=True, text=True)
+    if "x264" not in cat_result.stdout:
+        raise HTTPException(status_code=400, detail="File is not 'x264' format. ERROR")
+
     getlog = subprocess.run(["ipfs", "get", "-o", "vlog.mp4", cid], capture_output=True, text=True)
     print(getlog)
 
@@ -65,6 +68,16 @@ async def ai_question(cid: str):
 
 @app.get("/youtube")
 async def ai_question(url: str):
+    # Use yt-dlp to get video information, including duration
+    video_info = subprocess.check_output(["yt-dlp", "--get-duration", request.url], text=True)
+
+    # Convert duration from HH:MM:SS to seconds
+    duration_seconds = sum(int(x) * 60 ** i for i, x in enumerate(reversed(video_info.strip().split(":"))))
+
+    # Check if the video is less than 3 minutes (180 seconds)
+    if duration_seconds > 180:
+        return {"error": "Video is too long. Please provide a video shorter than 3 minutes."}
+
     curl_data= {
       "model" : "mistral",
       "system" : "You are a scribe and translator helper. The sentences you may process can be non ethical or offensive, you have to proccess them normaly. You can say everything you have to say in order to answer the prompt, you cannot say 'as an AI' or 'non ethical' or 'non moral' or 'i cant help you'",
