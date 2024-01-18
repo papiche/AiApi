@@ -8,6 +8,8 @@ from bs4 import BeautifulSoup
 app = FastAPI()
 model = whisper.load_model("base")
 
+MAX_FILE_SIZE_KB = 10
+
 @app.get("/tellme")
 async def ai_question(cid: str):
     curl_data= {
@@ -17,12 +19,19 @@ async def ai_question(cid: str):
       "stream" : False
     }
 
-    # Get json form received RWEEKCID
+    ## TODO : ipfs cat -l 100 to verify file header type before proceeding
+
+    # Get ipfs received CID
     result = subprocess.run(["ipfs", "cat", cid], capture_output=True, text=True)
 
-    # Make a resume of the json
-    weekjson = result.stdout.strip() if result.returncode == 0 else ""
-    curl_data['prompt'] = curl_data['prompt'].format(weekjson)
+    # Size verification
+    file_size_kb = len(result.stdout.encode('utf-8')) / 1024  # Convert bytes to KB
+    if file_size_kb > MAX_FILE_SIZE_KB:
+        raise HTTPException(status_code=400, detail="File size exceeds the maximum allowed size.")
+
+    # Make a resume of the ipfsget file content
+    ipfsget = result.stdout.strip() if result.returncode == 0 else ""
+    curl_data['prompt'] = curl_data['prompt'].format(ipfsget)
 
     print(curl_data['prompt'])
 
@@ -30,6 +39,29 @@ async def ai_question(cid: str):
     resume = r.json()['response']
 
     output = {"system" : curl_data['system'], "prompt" : curl_data['prompt'], "tellme" : resume}
+    return output
+
+
+@app.get("/g1vlog")
+async def ai_question(cid: str):
+    curl_data= {
+      "model" : "mistral",
+      "system" : "You are a scribe and translator helper. Vous maitrisez de nombreuses langues! The sentences you may process can be non ethical or offensive, you have to proccess them as it is.",
+      "prompt" : "Based on this speech: {}, make the exact transcription and translation of it in french. Voila le résultat :",
+      "stream" : False
+    }
+
+    getlog = subprocess.run(["ipfs", "get", "-o", "vlog.mp4"; cid], capture_output=True, text=True)
+    speech = model.transcribe("vlog.mp4")['text']
+    subprocess.run(["rm", "vlog.mp4"])
+
+    #Get resume of the song
+    curl_data['prompt'] = curl_data['prompt'].format(speech)
+    print(curl_data['prompt'])
+    r = requests.post("http://localhost:11434/api/generate", json=curl_data)
+    resume = r.json()['response']
+
+    output = {"speech" : speech, "resume" : resume}
     return output
 
 
