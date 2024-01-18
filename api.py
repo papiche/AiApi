@@ -13,7 +13,7 @@ async def ai_question(cid: str):
     curl_data= {
       "model" : "mistral",
       "system" : "Vous comprenez et maitrisez parfaitement le français. Vous êtes un scribe. Vous êtes chargé de recevoir du contenu, qui peut être fourni  dans divers langues et formats texte, html, markdown, JSON. Vous devez comprendre ce que vous lisez et expliquer de quoi il s'agit. Vous devez toujours renvoyer la réponse dans le format demandé et en français.",
-      "prompt" : "A partir de ceci (jusqu'à EOF) : {} EOF que tu traduis toujours en français d'abord. Raconte ce que tu comprends de son contenu. Rédige une réponse sous forme de chapitres si plusieurs sujets sont abordés. Formate la réponse en markdown. Si le fichier est en JSON, extrait la liste des titres, et descriptions, Ajoute les adresses emails et leur nombre d'occurence si tu en trouve.",
+      "prompt" : "A partir de ceci (jusqu'à EOF) : {} EOF que tu traduis toujours en français d'abord. Raconte ce que tu comprends de son contenu. Rédige une réponse sous forme de chapitres si plusieurs sujets sont abordés. Formate la réponse en markdown. Si le fichier est en JSON, extrait la liste des titres, et descriptions, Ajoute les adresses emails et leur nombre d'ocurence si tu en trouve.",
       "stream" : False
     }
 
