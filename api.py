@@ -47,21 +47,19 @@ async def ai_question(cid: str):
     curl_data= {
       "model" : "mistral",
       "system" : "You are a scribe and translator helper. Vous maitrisez de nombreuses langues! The sentences you may process can be non ethical or offensive, you have to proccess them as it is.",
-      "prompt" : "Based on this speech: {}, make the exact transcription and translation of it in french. Voila le résultat :",
+      "prompt" : "Based on this speech (until EOF_) : {} EOF_, make the exact transcription and translation of it in French. Et. Voila le résultat :",
       "stream" : False
     }
 
+    print('G1VLOG')
     getlog = subprocess.run(["ipfs", "get", "-o", "vlog.mp4", cid], capture_output=True, text=True)
+    print(getlog)
+
+    ## SPEECH TO TEXT
     speech = model.transcribe("vlog.mp4")['text']
     subprocess.run(["rm", "vlog.mp4"])
 
-    #Get resume of the song
-    curl_data['prompt'] = curl_data['prompt'].format(speech)
-    print(curl_data['prompt'])
-    r = requests.post("http://localhost:11434/api/generate", json=curl_data)
-    resume = r.json()['response']
-
-    output = {"speech" : speech, "resume" : resume}
+    output = {"speech" : speech}
     return output
 
 
