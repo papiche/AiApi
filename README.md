@@ -10,8 +10,19 @@ Running the API:
 ```
 uvicorn api:app --host 0.0.0.0
 ```
-Api endpoints:
-http://<host>/resume
+
+### Api endpoints:
+```
+http://<host>/tellme
+```
+
+Request type : GET
+Params: cid : string
+Returns: [{“system” : system, "prompt" : prompt , “tellme” : resume_of_cid_content }]
+
+```
+http://<host>/youtube
+```
 
 Request type : GET
 Params: url : string
