@@ -69,13 +69,13 @@ async def ai_question(cid: str):
 @app.get("/youtube")
 async def ai_question(url: str):
     # Use yt-dlp to get video information, including duration
-    video_info = subprocess.check_output(["yt-dlp", "--get-duration", request.url], text=True)
+    video_info = subprocess.check_output(["yt-dlp", "--get-duration", url], text=True)
 
     # Convert duration from HH:MM:SS to seconds
     duration_seconds = sum(int(x) * 60 ** i for i, x in enumerate(reversed(video_info.strip().split(":"))))
 
-    # Check if the video is less than 3 minutes (180 seconds)
-    if duration_seconds > 180:
+    # Check if the video is less than 5 minutes (300 seconds)
+    if duration_seconds > 300:
         return {"error": "Video is too long. Please provide a video shorter than 3 minutes."}
 
     curl_data= {
