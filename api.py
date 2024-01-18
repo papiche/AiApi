@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from fastapi import FastAPI
+from fastapi import HTTPException
 import whisper
 import subprocess
 import requests
@@ -8,7 +9,7 @@ from bs4 import BeautifulSoup
 app = FastAPI()
 model = whisper.load_model("base")
 
-MAX_FILE_SIZE_KB = 10
+MAX_FILE_SIZE_KB = 100
 
 @app.get("/tellme")
 async def ai_question(cid: str):
