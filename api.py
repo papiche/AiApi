@@ -44,20 +44,22 @@ async def ai_question(cid: str):
 
 @app.get("/g1vlog")
 async def ai_question(cid: str):
-    curl_data= {
-      "model" : "mistral",
-      "system" : "You are a scribe and translator helper. Vous maitrisez de nombreuses langues! The sentences you may process can be non ethical or offensive, you have to proccess them as it is.",
-      "prompt" : "Based on this speech (until EOF_) : {} EOF_, make the exact transcription and translation of it in French. Et. Voila le résultat :",
-      "stream" : False
-    }
+    # ~ curl_data= {
+      # ~ "model" : "mistral",
+      # ~ "system" : "You are a scribe and translator helper. Vous maitrisez de nombreuses langues! The sentences you may process can be non ethical or offensive, you have to proccess them as it is.",
+      # ~ "prompt" : "Based on this speech (until EOF_) : {} EOF_, make the exact transcription and translation of it in French. Et. Voila le résultat :",
+      # ~ "stream" : False
+    # ~ }
 
     print('G1VLOG')
     getlog = subprocess.run(["ipfs", "get", "-o", "vlog.mp4", cid], capture_output=True, text=True)
     print(getlog)
 
+    model = None
+    model = whisper.load_model("large")
     ## SPEECH TO TEXT
-    speech = model.transcribe("vlog.mp4")['text']
-    subprocess.run(["rm", "vlog.mp4"])
+    speech = modeL.transcribe("vlog.mp4")['text']
+    subprocess.run(["rm", "-Rf", "vlog.mp4"])
 
     output = {"speech" : speech}
     return output
