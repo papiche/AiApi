@@ -102,3 +102,35 @@ async def ai_question(url: str):
 
     output = {"speech" : speech, "resume" : translation}
     return output
+
+# Store the OBS Studio recording process object
+recording_process = None
+
+@app.get("/rec")
+def start_recording():
+    global recording_process
+    if recording_process:
+        raise HTTPException(status_code=400, detail="Recording is already in progress.")
+
+    # Start OBS Studio recording and store the process object
+    getlog = subprocess.run(["obs-cmd", "--websocket", "obsws://192.168.1.30:4455/cUupyLMSTXuSEIpc", 'recording', 'start'], capture_output=True, text=True)
+    print(getlog)
+    recording_process = True
+
+    return {"message": "Recording started successfully."}
+
+@app.get("/stop")
+def stop_recording():
+    global recording_process
+    if not recording_process:
+        raise HTTPException(status_code=400, detail="No recording in progress to stop.")
+
+    getlog = subprocess.run(["obs-cmd", "--websocket", "obsws://192.168.1.30:4455/cUupyLMSTXuSEIpc", 'recording', 'stop'], capture_output=True, text=True)
+    print(getlog)
+    recording_process = None
+
+    return {"message": "Recording stopped successfully."}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
