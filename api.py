@@ -103,6 +103,63 @@ async def ai_question(url: str):
     output = {"speech" : speech, "resume" : translation}
     return output
 
+@app.get("/transactions")
+async def get_transactions(pubkey: str, date: Optional[str] = None):
+    # Validate date format
+    if date:
+        try:
+            datetime.strptime(date, "%Y-%m-%d")
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
+
+    # Construct jaklis.py command
+    command = [
+        "/home/frd/.zen/Astroport.ONE/tools/jaklis/jaklis.py",
+        "history",
+        "-p", pubkey,
+        "-j",
+        "-n", "100"
+    ]
+
+    # Run jaklis.py command
+    result = subprocess.run(command, capture_output=True, text=True)
+
+    # Parse JSON output
+    try:
+        transactions = eval(result.stdout)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error parsing jaklis.py output: {str(e)}")
+
+    # Filter transactions based on date if provided
+    if date:
+        # Extract year and month from the provided date
+        target_year, target_month, _ = date.split('-')
+        transactions = [
+            t for t in transactions
+            if datetime.utcfromtimestamp(t['date']).strftime("%Y-%m") == f"{target_year}-{target_month}"
+        ]
+
+    # Format transactions into CSV
+    csv_data = []
+    total = 0.0  # Initialize total here
+    for transaction in transactions:
+        total += transaction["amount"]
+        formatted_date = datetime.utcfromtimestamp(transaction["date"]).strftime('%d/%m/%Y (%H:%M)')
+        csv_data.append([
+            formatted_date,
+            transaction["pubkey"],
+            transaction["comment"],
+            f"{transaction['amount']:.1f}" if transaction["amount"] < 0 else "0.0",
+            f"{-transaction['amount']:.1f}" if transaction["amount"] > 0 else "0.0",
+            f"{total:.1f}"
+        ])
+
+    # Generate CSV file in-memory
+    csv_file = "\n".join([",".join(map(str, row)) for row in csv_data])
+
+    return {"csv_data": csv_file}
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
