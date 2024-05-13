@@ -62,37 +62,12 @@ async def ai_question(cid: str):
     getlog = subprocess.run(["ipfs", "get", "-o", "vlog.mp4", cid], capture_output=True, text=True)
     print(getlog)
 
-    # Transcribe video and generate SRT subtitles
-    def transcribe_with_srt(model, video_file):
-        result = model.transcribe(video_file)
-        text = result['text']
-        timings = result['timings']  # Assuming timings are returned by the model
-        return text, timings
-
-    def format_srt_time(time):
-        return f"{time['start']} --> {time['end']}"
-
-    model = whisper.load_model("small")
-    speech_text, subtitles_timings = transcribe_with_srt(model, "vlog.mp4")
-
-    subtitles = []
-    for i, timing in enumerate(subtitles_timings):
-        start_time = format_srt_time(timing)
-        end_time = format_srt_time(timing)
-        subtitle_text = speech_text[i]  # Assuming speech_text is a list of text segments
-        subtitle = f"{i+1}\n{start_time}\n{subtitle_text}\n{end_time}\n"
-        subtitles.append(subtitle)
-
-    # Save subtitles to a .srt file
-    srt_filename = "subtitles.srt"
-    with open(srt_filename, "w") as f:
-        f.write("\n".join(subtitles))
-
-    # Clean up the video file
+    ## SPEECH TO TEXT
+    speech = model.transcribe("vlog.mp4", language="fr")['text']
     subprocess.run(["rm", "-Rf", "vlog.mp4"])
 
-    # Return the SRT file for download
-    return FileResponse(srt_filename, filename="subtitles.srt", media_type="application/octet-stream")
+    output = {"speech" : speech}
+    return output
 
 
 @app.get("/youtube")
