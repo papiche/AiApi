@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from fastapi import FastAPI
 from fastapi import HTTPException
+from fastapi.responses import FileResponse
 from typing import Optional
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -61,12 +62,37 @@ async def ai_question(cid: str):
     getlog = subprocess.run(["ipfs", "get", "-o", "vlog.mp4", cid], capture_output=True, text=True)
     print(getlog)
 
-    ## SPEECH TO TEXT
-    speech = model.transcribe("vlog.mp4", language="fr", output_format="srt")['text']
+    # Transcribe video and generate SRT subtitles
+    def transcribe_with_srt(model, video_file):
+        result = model.transcribe(video_file)
+        text = result['text']
+        timings = result['timings']  # Assuming timings are returned by the model
+        return text, timings
+
+    def format_srt_time(time):
+        return f"{time['start']} --> {time['end']}"
+
+    model = whisper.load_model("small")
+    speech_text, subtitles_timings = transcribe_with_srt(model, "vlog.mp4")
+
+    subtitles = []
+    for i, timing in enumerate(subtitles_timings):
+        start_time = format_srt_time(timing)
+        end_time = format_srt_time(timing)
+        subtitle_text = speech_text[i]  # Assuming speech_text is a list of text segments
+        subtitle = f"{i+1}\n{start_time}\n{subtitle_text}\n{end_time}\n"
+        subtitles.append(subtitle)
+
+    # Save subtitles to a .srt file
+    srt_filename = "subtitles.srt"
+    with open(srt_filename, "w") as f:
+        f.write("\n".join(subtitles))
+
+    # Clean up the video file
     subprocess.run(["rm", "-Rf", "vlog.mp4"])
 
-    output = {"speech" : speech}
-    return output
+    # Return the SRT file for download
+    return FileResponse(srt_filename, filename="subtitles.srt", media_type="application/octet-stream")
 
 
 @app.get("/youtube")
