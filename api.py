@@ -62,7 +62,7 @@ async def ai_question(cid: str):
     print(getlog)
 
     ## SPEECH TO TEXT
-    speech = model.transcribe("vlog.mp4")['text']
+    speech = model.transcribe("vlog.mp4", language="fr", output_format="srt")['text']
     subprocess.run(["rm", "-Rf", "vlog.mp4"])
 
     output = {"speech" : speech}
