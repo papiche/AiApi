@@ -10,7 +10,7 @@ import requests
 
 
 app = FastAPI()
-model = whisper.load_model("base")
+model = whisper.load_model("small")
 
 MAX_FILE_SIZE_KB = 20
 
