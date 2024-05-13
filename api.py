@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 from fastapi import FastAPI
 from fastapi import HTTPException
+from typing import Optional
+from bs4 import BeautifulSoup
 import whisper
 import subprocess
 import requests
-from bs4 import BeautifulSoup
+
 
 app = FastAPI()
 model = whisper.load_model("base")
