@@ -54,7 +54,7 @@ async def ai_question(cid: str):
 async def ai_question(cid: str):
     print('G1VLOG')
     # Verify if the file contains "x264" in the first 200 bytes
-    cat_result = subprocess.run(["ipfs", "cat", "-l", "200", cid], capture_output=True, text=True, encoding='utf-8')
+    cat_result = subprocess.run(["ipfs", "cat", "-l", "200", cid], capture_output=True, text=True, encoding='latin-1')
     if "x264" not in cat_result.stdout:
         raise HTTPException(status_code=400, detail="File is not 'x264' format. ERROR")
 
