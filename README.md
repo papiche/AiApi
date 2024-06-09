@@ -1,45 +1,94 @@
-# AiApi
-AiApi provide whisper video/audio 2 speech transcription and mistral AI interactions
+# FastAPI File Upload and Processing Application
 
-## collaborative Pad
+Cette application FastAPI permet de télécharger, traiter et analyser des fichiers texte, audio et vidéo. Elle utilise IPFS pour le stockage des fichiers, Whisper pour la transcription audio, et diverses commandes shell pour l'interaction avec les systèmes externes.
 
-https://pad.p2p.legal/gpu_ynov
+## Prérequis
 
-### Usage:
-Running the API:
-```
-uvicorn api:app --host 0.0.0.0
-```
+- Python 3.7 ou supérieur
+- FastAPI
+- Uvicorn
+- Whisper
+- IPFS
+- yt-dlp
+- OBS Studio avec WebSocket
 
-### Api endpoints:
-```
-http://<host>/tellme
-```
+## Installation
 
-Request type : GET
-Params: cid : string
-Returns: [{“system” : system, "prompt" : prompt , “tellme” : resume_of_cid_content }]
+1. Clonez le dépôt :
 
-```
-http://<host>/youtube
-```
+    ```bash
+    git clone https://github.com/papiche/AiApi
+    cd AiApi
+    ```
 
-Request type : GET
-Params: url : string
-Returns: [{“speech” : video_speech, “resume” : a_resume_of_the_speech}]
+2. Créez un environnement virtuel et activez-le :
 
-### Technical details
+    ```bash
+    python3 -m venv venv
+    source venv/bin/activate
+    ```
 
-* Le script fait appel à l’outil yt-dlp pour télécharger la vidéo à partir du lien fourni en paramètre de la requête GET
-* La librairie Whisper est utilisée pour récupérer le texte associé à l’audio de la vidéo
-* Le texte est ajouté en prompt à un modèle (voir script) pour obtenir un résumé en anglais de ce texte
-* Le résumé est traduis en français par un deuxième appel à un LLM
+3. Installez les dépendances :
 
-### Notes importantes
+    ```bash
+    pip install fastapi uvicorn beautifulsoup4 whisper magic requests
+    ```
 
-* la vidéo ne doit pas dépasser 3 minutes. (Dépends de la RAM / GPU)
-* l’API Whisper gére mieux les paroles anglais que français.
-* La traduction du résumé des paroles peut être partiellement incorrect selon le modèle utilisé
+4. Assurez-vous que IPFS, yt-dlp et OBS Studio sont installés et configurés sur votre système.
 
-https://gist.github.com/mberman84/ea207e7d9e5f8c5f6a3252883ef16df3
-https://microsoft.github.io/autogen/
+## Configuration
+
+1. Démarrez le démon IPFS :
+
+    ```bash
+    ipfs daemon
+    ```
+
+2. Configurez OBS Studio pour accepter les commandes WebSocket.
+
+## Utilisation
+
+1. Démarrez l'application FastAPI :
+
+    ```bash
+    uvicorn main:app --reload
+    ```
+
+2. Ouvrez votre navigateur et accédez à `http://127.0.0.1:8000` pour voir le formulaire de téléchargement de fichiers.
+
+### Endpoints
+
+- **GET /** : Affiche le formulaire HTML pour le téléchargement de fichiers.
+- **POST /upload** : Télécharge un fichier, détermine son type, et l'ajoute à IPFS.
+- **GET /tellme** : Analyse le contenu d'un fichier texte à partir de son CID sur IPFS, le résume et le traduit en français.
+- **GET /g1vlog** : Vérifie si un fichier vidéo est au format x264, le télécharge, et utilise Whisper pour transcrire le contenu audio en texte.
+- **GET /youtube** : Télécharge une vidéo YouTube, vérifie sa durée, la transcrit, et traduit le résumé en français.
+- **GET /transactions** : Récupère l'historique des transactions d'une clé publique donnée et les formate en CSV.
+- **GET /rec** : Démarre l'enregistrement vidéo avec OBS Studio.
+- **GET /stop** : Arrête l'enregistrement vidéo avec OBS Studio.
+
+### Exemple de Téléchargement de Fichier
+
+1. Sélectionnez un fichier à télécharger (texte, audio ou vidéo).
+2. Cliquez sur le bouton "Upload".
+3. Une fois le fichier téléchargé, un CID sera affiché.
+4. Utilisez les boutons "Process Text" ou "Process Video" pour analyser le fichier.
+
+### Exemple de Traitement de Vidéo YouTube
+
+1. Accédez à l'endpoint `/youtube` avec l'URL de la vidéo YouTube en paramètre.
+2. La vidéo sera téléchargée, transcrite et résumée.
+
+## Développement
+
+Pour contribuer à ce projet, veuillez suivre les étapes ci-dessous :
+
+1. Forkez le dépôt.
+2. Créez une branche pour votre fonctionnalité (`git checkout -b feature/ma-fonctionnalite`).
+3. Commitez vos modifications (`git commit -am 'Ajoute une nouvelle fonctionnalité'`).
+4. Poussez votre branche (`git push origin feature/ma-fonctionnalite`).
+5. Créez une Pull Request.
+
+## Licence
+
+Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE) pour plus de détails.

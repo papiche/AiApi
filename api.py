@@ -19,7 +19,6 @@ MAX_FILE_SIZE_KB = 20
 html_form = """
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -41,7 +40,7 @@ html_form = """
             padding: 20px;
             border-radius: 8px;
             text-align: center;
-            max-width: 400px;
+            max-width: 480px;
             width: 100%;
         }
 
@@ -85,7 +84,7 @@ html_form = """
             display: none;
         }
 
-        #loading-indicator {
+        #loading-indicator, #loading-indicator-g1vlog, #loading-indicator-tellme {
             display: none;
             margin-top: 20px;
         }
@@ -97,24 +96,42 @@ html_form = """
         .success {
             color: green;
         }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #09f;
+            animation: spin 1s ease infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
-
 <body>
     <div id="upload-container">
         <h1>Upload file to Astroport</h1>
         <form id="upload-form" enctype="multipart/form-data" method="post">
             <input type="file" id="file" accept="video/*,audio/*,text/*,.txt" required>
             <input type="button" value="Upload" onclick="uploadFile()">
-            <div id="loading-indicator">Loading...</div>
+            <div id="loading-indicator" class="spinner"></div>
         </form>
 
         <div id="result-container" class="success"></div>
-        <div id="text-option"><a id="text-option-link" href="#">Process Text File</a></div>
-        <div id="video-option"><a id="video-option-link" href="#">Process Video File</a></div>
+        <div id="text-option"></div>
+        <div id="video-option"></div>
+        <div id="loading-indicator-g1vlog" class="spinner"></div>
+        <div id="loading-indicator-tellme" class="spinner"></div>
         <div id="error-message" class="error"></div>
     </div>
-
     <script>
         async function uploadFile() {
             const fileInput = document.getElementById('file');
@@ -155,15 +172,55 @@ html_form = """
                 }
 
                 const result = await response.json();
-                resultContainer.textContent = `File uploaded successfully. CID: ${result.cid}`;
+                resultContainer.textContent = `File uploaded successfully. CID: ${result.cid}/${result.file}`;
                 resultContainer.style.display = 'block';
 
                 if (result.file_type === 'text') {
                     textOption.style.display = 'block';
-                    document.getElementById('text-option-link').href = `/tellme?cid=${encodeURIComponent(result.cid)}`;
+                    const textButton = document.createElement('button');
+                    textButton.textContent = 'Process Text';
+                    textButton.onclick = async function() {
+                        const loadingIndicatorTellme = document.getElementById('loading-indicator-tellme');
+                        loadingIndicatorTellme.style.display = 'block';
+                        try {
+                            const textResponse = await fetch(`/tellme?cid=${encodeURIComponent(result.cid)}/${encodeURIComponent(result.file)}`);
+                            if (!textResponse.ok) {
+                                throw new Error('Failed to process text file');
+                            }
+                            const textData = await textResponse.json();
+                            console.log(textData);
+                            // Update the UI with the response data
+                            resultContainer.textContent = `${textData.tellme}`;
+                        } catch (error) {
+                            errorMessage.textContent = `Error processing text file: ${error.message}`;
+                            errorMessage.style.display = 'block';
+                        } finally {
+                            loadingIndicatorTellme.style.display = 'none';
+                        }
+                    };
+                    textOption.appendChild(textButton);
                 } else if (result.file_type === 'video') {
                     videoOption.style.display = 'block';
-                    document.getElementById('video-option-link').href = `/g1vlog?cid=${encodeURIComponent(result.cid)}`;
+                    const videoButton = document.createElement('button');
+                    videoButton.textContent = 'Process Video';
+                    videoButton.onclick = async function() {
+                        const loadingIndicatorG1vlog = document.getElementById('loading-indicator-g1vlog');
+                        loadingIndicatorG1vlog.style.display = 'block';
+                        try {
+								const videoResponse = await fetch(`/g1vlog?cid=${encodeURIComponent(result.cid)}&file=${encodeURIComponent(result.file)}`);                            if (!videoResponse.ok) {
+                                throw new Error('Failed to process video file');
+                            }
+                            const videoData = await videoResponse.json();
+                            // Update the UI with the response data
+                            resultContainer.textContent = `Video processed: ${videoData.speech}`;
+                        } catch (error) {
+                            errorMessage.textContent = `Error processing video file: ${error.message}`;
+                            errorMessage.style.display = 'block';
+                        } finally {
+                            loadingIndicatorG1vlog.style.display = 'none';
+                        }
+                    };
+                    videoOption.appendChild(videoButton);
                 } else {
                     errorMessage.textContent = 'Unsupported file type. Please upload a text or video file.';
                     errorMessage.style.display = 'block';
@@ -177,7 +234,6 @@ html_form = """
         }
     </script>
 </body>
-
 </html>
 """
 
@@ -192,7 +248,11 @@ def get_mime_type(file: UploadFile):
 
 @app.post("/upload")
 async def create_upload_file(file: UploadFile = File(...)):
-        
+    # Validate file size
+    max_file_size = 100 * 1024 * 1024  # 100MB
+    if file.file.__sizeof__() > max_file_size:
+        raise HTTPException(status_code=400, detail="File size exceeds the limit of 100MB")
+
     # Check the file type
     mime_type = get_mime_type(file)
     print(f"Detected MIME type: {mime_type}")
@@ -203,15 +263,21 @@ async def create_upload_file(file: UploadFile = File(...)):
         else "audio" if mime_type.startswith("Audio") or "MP3" in mime_type
         else "unknown"
     )
+	
+	# If the file type is unknown, use the file extension
+    if file_type == "unknown":
+        file_extension = os.path.splitext(file.filename)[1].lower()
+        file_type = (
+            "text" if file_extension in [".txt", ".md", ".html", ".json"]
+            else "video" if file_extension in [".mp4", ".avi", ".mov"]
+            else "audio" if file_extension in [".mp3", ".wav", ".aac"]
+            else "unknown"
+        )
+    
     # Save the uploaded file to a temporary location
     temp_file_path = f"/tmp/{file.filename}"
     with open(temp_file_path, "wb") as f:
         f.write(file.file.read())
-
-    # Validate file size
-    max_file_size = 100 * 1024 * 1024  # 100MB
-    if file.file.__sizeof__() > max_file_size:
-        raise HTTPException(status_code=400, detail="File size exceeds the limit of 100MB")
 
     # Add the file to IPFS 
     result = subprocess.run(["ipfs", "add", "-wq", temp_file_path], capture_output=True, text=True)
@@ -233,7 +299,7 @@ async def create_upload_file(file: UploadFile = File(...)):
     return output
     
 @app.get("/tellme")
-async def ai_question(cid: str):
+async def ai_tellme(cid: str):
     curl_data= {
       "model" : "phi3",
       "system" : "Vous comprenez et maitrisez parfaitement le français. Vous êtes un scribe. Vous êtes chargé de recevoir du contenu, qui peut être fourni  dans divers langues et formats texte, html, markdown, JSON. Vous devez comprendre ce que vous lisez et expliquer de quoi il s'agit. Vous devez toujours renvoyer la réponse dans le format demandé et en français.",
@@ -241,22 +307,28 @@ async def ai_question(cid: str):
       "stream" : False
     }
 
-    # Verify if the file contains binary data in the first 200 bytes using ipfs cat -l
-    # cat_result = subprocess.run(["ipfs", "cat", "-l", "200", cid], capture_output=True, text=True, encoding='utf-8')
-
-    # if "x\x00" in cat_result.stdout:
-    #     raise HTTPException(status_code=400, detail="File contains binary data. ERROR")
+    print('TELLME')
 
     # Get ipfs received CID
     result = subprocess.run(["ipfs", "cat", cid], capture_output=True, text=True)
 
+    # Check if the command was successful
+    if result.returncode != 0:
+        raise HTTPException(status_code=500, detail="Error retrieving file from IPFS")
+
+    # Get the content of the file
+    ipfsget = result.stdout.strip()
+
+    # Check if the content is empty
+    if not ipfsget:
+        raise HTTPException(status_code=400, detail="The file content is empty")
+
     # Size verification
-    file_size_kb = len(result.stdout.encode('utf-8')) / 1024  # Convert bytes to KB
+    file_size_kb = len(ipfsget.encode('utf-8')) / 1024  # Convert bytes to KB
     if file_size_kb > MAX_FILE_SIZE_KB:
         raise HTTPException(status_code=400, detail="File size exceeds the maximum allowed size.")
 
     # Make a resume of the ipfsget file content
-    ipfsget = result.stdout.strip() if result.returncode == 0 else ""
     curl_data['prompt'] = curl_data['prompt'].format(ipfsget)
 
     print(curl_data['prompt'])
@@ -268,25 +340,38 @@ async def ai_question(cid: str):
     return output
 
 @app.get("/g1vlog")
-async def ai_question(cid: str):
+async def ai_stt(cid: str, file: str):
     print('G1VLOG')
-    # Verify if the file contains "x264" in the first 200 bytes
-    cat_result = subprocess.run(["ipfs", "cat", "-l", "200", cid], capture_output=True, text=True, encoding='latin-1')
-    if "x264" not in cat_result.stdout:
-        raise HTTPException(status_code=400, detail="File is not 'x264' format. ERROR")
+    print(f"Received CID: {cid}")
+    print(f"Received file name: {file}")
 
-    getlog = subprocess.run(["ipfs", "get", "-o", "vlog.mp4", cid], capture_output=True, text=True)
-    print(getlog)
+    try:
+        getlog = subprocess.run(["ipfs", "get", "-o", "vlog.mp4", f"{cid}/{file}"], capture_output=True, text=True)
+        print(f"IPFS get result: {getlog.stdout}")
+    except Exception as e:
+        print(f"Error running IPFS get: {e}")
+        raise HTTPException(status_code=500, detail="Error running IPFS get command")
 
     ## SPEECH TO TEXT
-    speech = model.transcribe("vlog.mp4", language="fr")['text']
-    subprocess.run(["rm", "-Rf", "vlog.mp4"])
+    try:
+        speech = model.transcribe("vlog.mp4", language="fr")['text']
+        print(f"Transcription result: {speech}")
+    except Exception as e:
+        print(f"Error transcribing video: {e}")
+        raise HTTPException(status_code=500, detail=f"Error transcribing video: {e}")
 
-    output = {"speech" : speech}
+    try:
+        subprocess.run(["rm", "-Rf", "vlog.mp4"])
+        print("Temporary file vlog.mp4 removed")
+    except Exception as e:
+        print(f"Error removing temporary file: {e}")
+        raise HTTPException(status_code=500, detail="Error removing temporary file")
+
+    output = {"speech": speech}
     return output
 
 @app.get("/youtube")
-async def ai_question(url: str):
+async def ai_tube(url: str):
     # Use yt-dlp to get video information, including duration
     video_info = subprocess.check_output(["yt-dlp", "--get-duration", url], text=True)
 
