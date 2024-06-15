@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AiAPI micro service for Astroport.ONE GPU Station</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+			display: flex;
+			flex-direction: column;
+			min-height: 100vh;
+			margin: 0;
+            align-items: center;
+            justify-content: center;
+        }
+
+		#content {
+			flex: 1;
+		}
+		
+        #upload-container {
+            background-color: #ffffff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            max-width: 480px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333333;
+        }
+
+        form {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        input[type="file"],
+        input[type="text"] {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        input[type="button"] {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        input[type="button"]:hover {
+            background-color: #45a049;
+        }
+        
+        input[type="button"]:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        #result-container, #text-option, #video-option {
+            margin-top: 20px;
+            display: none;
+        }
+
+        #loading-indicator, #loading-indicator-tellme, #loading-indicator-g1vlog, #youtube-loading-indicator {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .error {
+            color: red;
+        }
+
+        .success {
+            color: green;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #09f;
+            animation: spin 1s ease infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+		.youtube-result-container {
+			max-width: 100%;
+			max-height: 300px; /* Adjust the height as needed */
+			overflow: auto;
+			display: block;
+			margin: 10px 0; /* Add some margin to separate it from other elements */
+		}
+		#logs {
+			background-color: #f1f1f1;
+			padding: 10px;
+			border-top: 1px solid #ccc;
+		}        
+        .logs {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            box-sizing: border-box;
+            font-size: 14px;
+            overflow-y: auto;
+            max-height: 150px;
+        }
+    </style>
+</head>
+<body>
+<div id="content">
+    <div id="upload-container">
+        <h1>"yt-dlp" 2 IPFS</h1>
+        <form id="youtube-form" method="get">
+            <input type="text" id="youtube-url" placeholder="Enter Video URL" required>
+            <input type="text" id="public-key" placeholder="Enter Public Key" required>
+            <input type="button" id="youtube-button" value="Process" onclick="processYouTube()">
+            <div id="youtube-loading-indicator" class="spinner"></div>
+        </form>
+
+        <h1>Summarize text, audio or video</h1>
+        <form id="upload-form" enctype="multipart/form-data" method="post">
+            <input type="file" id="file" accept="video/*,audio/*,text/*,.txt" required>
+            <input type="button" value="Upload" onclick="uploadFile()">
+            <div id="loading-indicator" class="spinner"></div>
+        </form>
+
+        <div id="text-option"></div>
+        <div id="video-option"></div>
+        <div id="loading-indicator-g1vlog" class="spinner"></div>
+        <div id="loading-indicator-tellme" class="spinner"></div>
+    </div>
+
+
+    <div id="result-container" class="success"></div>
+    <div id="youtube-result-container" class="success"></div>
+</div>
+<div id="logs">
+	<div id="error-message" class="error"></div>
+	<div id="youtube-error-message" class="error"></div>
+</div>
+
+<script>
+	async function uploadFile() {
+		const fileInput = document.getElementById('file');
+		const file = fileInput.files[0];
+		const resultContainer = document.getElementById('result-container');
+		const errorMessage = document.getElementById('error-message');
+		const loadingIndicator = document.getElementById('loading-indicator');
+		const textOption = document.getElementById('text-option');
+		const videoOption = document.getElementById('video-option');
+		const maxSizeKB = 100 * 1024; // 100 MB
+
+		// Reset previous states
+		resultContainer.style.display = 'none';
+		errorMessage.style.display = 'none';
+		loadingIndicator.style.display = 'block';
+
+		// Check file size
+		if (file.size / 1024 > maxSizeKB) {
+			errorMessage.textContent = 'File size exceeds the limit of 100MB';
+			errorMessage.style.display = 'block';
+			loadingIndicator.style.display = 'none';
+			return;
+		}
+
+		const formData = new FormData();
+		formData.append('file', file);
+
+		try {
+			const response = await fetch('/upload', {
+				method: 'POST',
+				body: formData
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to upload file');
+			}
+
+			const result = await response.json();
+			resultContainer.textContent = `File uploaded successfully. CID: ${result.cid}/${result.file}`;
+			resultContainer.style.display = 'block';
+
+			if (result.file_type === 'text') {
+				textOption.style.display = 'block';
+				videoOption.style.display = 'none';
+				const textButton = document.createElement('button');
+				textButton.textContent = 'Process Text';
+				textButton.onclick = async function() {
+					const loadingIndicatorTellme = document.getElementById('loading-indicator-tellme');
+					loadingIndicatorTellme.style.display = 'block';
+					try {
+						const textResponse = await fetch(`/tellme?cid=${encodeURIComponent(result.cid)}/${encodeURIComponent(result.file)}`);
+						if (!textResponse.ok) {
+							throw new Error('Failed to process text file');
+						}
+						const textData = await textResponse.json();
+						console.log(textData);
+						// Update the UI with the response data
+						resultContainer.textContent = `${textData.tellme}`;
+					} catch (error) {
+						errorMessage.textContent = `Error processing text file: ${error.message}`;
+						errorMessage.style.display = 'block';
+					} finally {
+						loadingIndicatorTellme.style.display = 'none';
+					}
+				};
+				textOption.appendChild(textButton);
+			} else if (result.file_type === 'video') {
+				videoOption.style.display = 'block';
+				textOption.style.display = 'none';
+				const videoButton = document.createElement('button');
+				videoButton.textContent = 'Process Video';
+				videoButton.onclick = async function() {
+					const loadingIndicatorG1vlog = document.getElementById('loading-indicator-g1vlog');
+					loadingIndicatorG1vlog.style.display = 'block';
+					try {
+							const videoResponse = await fetch(`/g1vlog?cid=${encodeURIComponent(result.cid)}&file=${encodeURIComponent(result.file)}`);                            if (!videoResponse.ok) {
+							throw new Error('Failed to process video file');
+						}
+						const videoData = await videoResponse.json();
+						// Update the UI with the response data
+						resultContainer.textContent = `${videoData.speech}`;
+					} catch (error) {
+						errorMessage.textContent = `Error processing video file: ${error.message}`;
+						errorMessage.style.display = 'block';
+					} finally {
+						loadingIndicatorG1vlog.style.display = 'none';
+					}
+				};
+				videoOption.appendChild(videoButton);
+			} else {
+				errorMessage.textContent = 'Unsupported file type. Please upload a text or video file.';
+				errorMessage.style.display = 'block';
+			}
+		} catch (error) {
+			errorMessage.textContent = `Error uploading file: ${error.message}`;
+			errorMessage.style.display = 'block';
+		} finally {
+			loadingIndicator.style.display = 'none';
+		}
+	}
+	
+	async function processYouTube() {
+		const youtubeUrl = document.getElementById('youtube-url').value;
+		const publicKey = document.getElementById('public-key').value;
+		const youtubeButton = document.getElementById('youtube-button');
+		const youtubeResultContainer = document.getElementById('youtube-result-container');
+		const youtubeErrorMessage = document.getElementById('youtube-error-message');
+		const youtubeLoadingIndicator = document.getElementById('youtube-loading-indicator');
+		const logsContainer = document.getElementById('logs');
+		const videoOption = document.getElementById('video-option');
+		const resultContainer = document.getElementById('result-container');
+
+		// Reset previous states
+		youtubeResultContainer.style.display = 'none';
+		youtubeErrorMessage.style.display = 'none';
+		youtubeLoadingIndicator.style.display = 'block';
+		youtubeButton.disabled = true;
+		logsContainer.innerHTML = '';
+
+		try {
+			const response = await fetch(`/youtube?url=${encodeURIComponent(youtubeUrl)}&pubkey=${encodeURIComponent(publicKey)}`);
+			if (!response.ok) {
+				throw new Error('Failed to process YouTube video');
+			}
+
+			const result = await response.json();
+			resultContainer.textContent = `${result.cid}/${result.file}`;
+			resultContainer.style.display = 'block';
+
+			const videoButton = document.createElement('button');
+			videoButton.textContent = '>>> Transcription';
+			videoButton.onclick = async function() {
+				const loadingIndicatorG1vlog = document.getElementById('loading-indicator-g1vlog');
+				loadingIndicatorG1vlog.style.display = 'block';
+				try {
+						const videoResponse = await fetch(`/g1vlog?cid=${encodeURIComponent(result.cid)}&file=${encodeURIComponent(result.file)}`);                            if (!videoResponse.ok) {
+						throw new Error('Failed to process video file');
+					}
+					const videoData = await videoResponse.json();
+					// Update the UI with the response data
+					resultContainer.textContent = `Video processed: ${videoData.speech}`;
+				} catch (error) {
+					errorMessage.textContent = `Error processing video file: ${error.message}`;
+					errorMessage.style.display = 'block';
+				} finally {
+					loadingIndicatorG1vlog.style.display = 'none';
+				}
+			};
+			resultContainer.appendChild(videoButton);
+
+			// Display logs
+			if (result.logs) {
+				logsContainer.innerHTML = result.logs.join('<br>');
+			}
+		} catch (error) {
+			youtubeErrorMessage.textContent = `Error processing YouTube video: ${error.message}`;
+			youtubeErrorMessage.style.display = 'block';
+		} finally {
+			youtubeLoadingIndicator.style.display = 'none';
+			youtubeButton.disabled = false;
+		}
+	}
+</script>
+</body>
+</html>
