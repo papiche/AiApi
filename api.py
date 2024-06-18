@@ -139,6 +139,9 @@ async def ai_stt(cid: str, file: str):
         print(f"Error running IPFS get: {e}")
         raise HTTPException(status_code=500, detail="Error running IPFS get command")
 
+	## unpin ipfs get 
+    subprocess.run(["ipfs", "pin", "rm", cid])
+
     ## SPEECH TO TEXT
     try:
         speech = model.transcribe("tmp/vlog.mp4", language="fr")['text']
