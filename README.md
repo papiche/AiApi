@@ -183,4 +183,4 @@ Pour contribuer à ce projet, veuillez suivre les étapes ci-dessous :
 
 ## Licence
 
-Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
+Ce projet est sous licence GNU AFFERO GENERAL PUBLIC LICENSE. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
