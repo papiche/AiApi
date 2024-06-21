@@ -1,6 +1,9 @@
 # FastAPI File Upload and Processing Application
 
-Cette application FastAPI permet de télécharger, traiter et analyser des fichiers texte, audio et vidéo. Elle utilise IPFS pour le stockage des fichiers, Whisper pour la transcription audio, et diverses commandes shell pour l'interaction avec les systèmes externes.
+Cette application FastAPI permet de télécharger, traiter et analyser des fichiers texte,
+audio et vidéo. Elle utilise IPFS pour le stockage des fichiers,
+Whisper pour la transcription audio, et diverses commandes shell pour
+l'interaction avec les systèmes externes.
 
 ## Prérequis
 
@@ -126,6 +129,47 @@ Arrête l'enregistrement vidéo via OBS Studio.
 - **Méthode** : `GET`
 - **Réponse** :
   - `message` : Message de confirmation
+
+
+# UI `templates/index.html`
+
+
+L'interface utilisateur (UI) est définie dans un fichier HTML avec du JavaScript pour gérer les interactions avec l'API. Voici une description des principales fonctionnalités de l'UI :
+
+### Structure HTML
+
+- **Container Principal** : Contient les formulaires et les résultats.
+- **Formulaire YouTube** : Permet à l'utilisateur d'entrer une URL de vidéo YouTube et une clé publique pour traiter la vidéo.
+- **Formulaire de Téléchargement** : Permet à l'utilisateur de télécharger un fichier (texte, audio ou vidéo) pour le traitement.
+- **Indicateurs de Chargement** : Affichent des spinners pour indiquer que des opérations sont en cours.
+- **Containers de Résultats** : Affichent les résultats des opérations et les messages d'erreur.
+
+### JavaScript
+
+Le JavaScript gère les interactions utilisateur et les appels API. Voici les principales fonctions :
+
+#### `uploadFile()`
+
+Cette fonction gère le téléchargement de fichiers et leur traitement :
+
+1. **Récupération du Fichier** : Récupère le fichier sélectionné par l'utilisateur.
+2. **Validation de la Taille** : Vérifie que la taille du fichier ne dépasse pas 100 MB.
+3. **Envoi du Fichier** : Envoie le fichier à l'endpoint `/upload` de l'API.
+4. **Traitement du Résultat** :
+   - Si le fichier est de type texte, affiche un bouton pour traiter le texte via l'endpoint `/tellme`.
+   - Si le fichier est de type vidéo, affiche un bouton pour traiter la vidéo via l'endpoint `/g1vlog`.
+5. **Gestion des Erreurs** : Affiche les messages d'erreur en cas de problème.
+
+#### `processYouTube()`
+
+Cette fonction gère le traitement des vidéos YouTube :
+
+1. **Récupération des Entrées** : Récupère l'URL de la vidéo YouTube et la clé publique entrées par l'utilisateur.
+2. **Envoi de la Requête** : Envoie une requête à l'endpoint `/youtube` de l'API.
+3. **Traitement du Résultat** :
+   - Affiche un bouton pour transcrire la vidéo via l'endpoint `/g1vlog`.
+4. **Gestion des Erreurs** : Affiche les messages d'erreur en cas de problème.
+
 
 ## Développement
 
