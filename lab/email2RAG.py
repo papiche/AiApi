@@ -1,7 +1,7 @@
 import imaplib
 import email
 from email.header import decode_header
-import ollama
+import requests
 import chromadb
 from chromadb.config import Settings
 import logging
@@ -153,14 +153,21 @@ def stocker_exemple_negatif(question, utilisateur_id):
 def generer_reponse(contenu, utilisateur_id):
     try:
         # Vérifier si le modèle existe
-        models = ollama.list()
+        models_response = requests.get("http://localhost:11434/api/tags")
+        models = models_response.json()
         if utilisateur_id not in [model['name'] for model in models['models']]:
             logger.error(f"Le modèle {utilisateur_id} n'existe pas dans Ollama")
             return "Désolé, une erreur s'est produite lors de la génération de la réponse."
 
         model_name = utilisateur_id  # Utilisation directe de utilisateur_id comme nom du modèle
 
-        embedding = ollama.embeddings(model=model_name, prompt=contenu)["embedding"]
+        # Générer l'embedding
+        embedding_data = {
+            "model": model_name,
+            "prompt": contenu
+        }
+        embedding_response = requests.post("http://localhost:11434/api/embeddings", json=embedding_data)
+        embedding = embedding_response.json()["embedding"]
 
         exemples_positifs = collection.query(
             query_embeddings=[embedding],
@@ -169,20 +176,17 @@ def generer_reponse(contenu, utilisateur_id):
         )
 
         contexte_exemples = "\n".join(exemples_positifs['documents'][0])
-
         prompt = f"Exemples précédents:\n{contexte_exemples}\n\nEmail actuel:\n{contenu}\n\nRéponse:"
-        response = ollama.chat(model=model_name, messages=[
-            {
-                'role': 'system',
-                'content': 'Vous êtes un assistant email intelligent. Utilisez les exemples précédents et le contexte fourni pour générer une réponse pertinente.'
-            },
-            {
-                'role': 'user',
-                'content': prompt
-            }
-        ])
 
-        return response['message']['content']
+        # Générer la réponse
+        generate_data = {
+            "model": model_name,
+            "prompt": prompt,
+            "system": "Vous êtes un assistant email intelligent. Utilisez les exemples précédents et le contexte fourni pour générer une réponse pertinente."
+        }
+        response = requests.post("http://localhost:11434/api/generate", json=generate_data)
+        return response.json()['response']
+
     except Exception as e:
         logger.error(f"Erreur lors de la génération de la réponse pour l'utilisateur {utilisateur_id}: {str(e)}")
         logger.error(traceback.format_exc())
