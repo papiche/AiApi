@@ -170,13 +170,16 @@ def generer_reponse(sujet, contenu, utilisateur_id):
 
         contexte_exemples = "\n".join(exemples_positifs['documents'][0])
         prompt = f"Exemples précédents:\n{contexte_exemples}\n\nEmail actuel:\nSujet: {sujet}\nContenu: {contenu}\n\nRéponse:"
+        logger.debug(f"prompt : {prompt}")
 
         # Générer la réponse
         generate_data = {
             "model": model_name,
             "prompt": prompt,
-            "system": "Vous êtes un assistant email intelligent. Utilisez les exemples précédents et le contexte fourni pour générer une réponse pertinente."
+            "system": "Vous êtes un assistant email intelligent. Utilisez les exemples précédents et le contexte fourni pour générer une réponse pertinente.",
+            "stream" : False
         }
+
         response = requests.post("http://localhost:11434/api/generate", json=generate_data)
         logger.debug(f"Réponse brute de l'API Ollama : {response.text}")
 
