@@ -10,6 +10,7 @@ import sys
 import traceback
 import smtplib
 import ssl
+from smtplib import SMTP, SMTP_SSL
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
@@ -87,16 +88,29 @@ def envoyer_email(smtp_server, smtp_port, sender_email, sender_password, recipie
         msg['From'] = sender_email
         msg['To'] = recipient
         msg['Subject'] = f"Re: {subject}"
-
         msg.attach(MIMEText(body, 'plain'))
 
         context = ssl.create_default_context()
-        with smtplib.SMTP(smtp_server, smtp_port) as server:
-            server.starttls(context=context)
-            server.login(sender_email, sender_password)
-            server.send_message(msg)
 
-        logger.info(f"Réponse envoyée avec succès à {recipient}")
+        # Essayer d'abord avec STARTTLS
+        try:
+            with SMTP(smtp_server, smtp_port) as server:
+                server.ehlo()
+                if server.has_extn('STARTTLS'):
+                    server.starttls(context=context)
+                    server.ehlo()
+                server.login(sender_email, sender_password)
+                server.send_message(msg)
+            logger.info(f"Réponse envoyée avec succès à {recipient} en utilisant STARTTLS")
+        except Exception as e:
+            logger.warning(f"Échec de l'envoi avec STARTTLS: {str(e)}. Tentative sans chiffrement...")
+
+            # Si STARTTLS échoue, essayer sans chiffrement
+            with SMTP(smtp_server, smtp_port) as server:
+                server.login(sender_email, sender_password)
+                server.send_message(msg)
+            logger.info(f"Réponse envoyée avec succès à {recipient} sans chiffrement")
+
     except Exception as e:
         logger.error(f"Erreur lors de l'envoi de l'email à {recipient}: {str(e)}")
         logger.error(traceback.format_exc())
