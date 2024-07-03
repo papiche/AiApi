@@ -48,9 +48,9 @@ except Exception as e:
 
 def lire_emails(imap_server, email_address, password):
     logger.info(f"Tentative de connexion au serveur IMAP: {imap_server}")
-    context = ssl.create_default_context()
     try:
-        imap = imaplib.IMAP4_SSL(imap_server, context=context)
+        imap = imaplib.IMAP4_SSL(imap_server)
+        logger.info("Connexion SSL établie, tentative de login")
         imap.login(email_address, password)
         logger.info("Login réussi")
 
