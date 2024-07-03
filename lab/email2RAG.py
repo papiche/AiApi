@@ -191,7 +191,7 @@ if __name__ == "__main__":
         SMTP_PORT = int(os.getenv("SMTP_PORT"))
         EMAIL = os.getenv("EMAIL")
         PASSWORD = os.getenv("PASSWORD")
-        UTILISATEUR_ID = sys.argv[1] if len(sys.argv) > 1 else "gwen2"
+        UTILISATEUR_ID = sys.argv[1] if len(sys.argv) > 1 else "qwen2"
 
         traiter_emails_et_appliquer_rag(IMAP_SERVER, EMAIL, PASSWORD, SMTP_SERVER, SMTP_PORT, UTILISATEUR_ID)
         logger.info("Fin du processus de traitement des emails")
