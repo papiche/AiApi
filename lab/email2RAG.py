@@ -27,10 +27,7 @@ logger.addHandler(handler)
 
 # Configuration de ChromaDB
 try:
-    chroma_client = chromadb.Client(Settings(
-        chroma_db_impl="duckdb+parquet",
-        persist_directory="./chroma_db"
-    ))
+    chroma_client = chromadb.PersistentClient(path="./chroma_db")
     collection = chroma_client.get_or_create_collection(name="email_collection")
     logger.info("Connexion à ChromaDB établie avec succès")
 except Exception as e:
