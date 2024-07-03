@@ -169,7 +169,7 @@ def generer_reponse(contenu, utilisateur_id):
         )
 
         contexte_exemples = "\n".join(exemples_positifs['documents'][0])
-        prompt = f"Exemples précédents:\n{contexte_exemples}\n\nEmail actuel:\n{contenu}\n\nRéponse:"
+        prompt = f"Exemples précédents:\n{contexte_exemples}\n\nEmail actuel:\nSujet: {sujet}\nContenu: {contenu}\n\nRéponse:"
 
         # Générer la réponse
         generate_data = {
@@ -179,6 +179,7 @@ def generer_reponse(contenu, utilisateur_id):
         }
         response = requests.post("http://localhost:11434/api/generate", json=generate_data)
         logger.debug(f"Réponse brute de l'API Ollama : {response.text}")
+
         # Tentative de décodage JSON
         try:
             response_json = response.json()
