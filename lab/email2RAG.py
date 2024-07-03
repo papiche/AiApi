@@ -17,6 +17,13 @@ import os
 # Charger les variables d'environnement depuis le fichier .env
 load_dotenv()
 
+# Vérification des variables d'environnement
+required_env_vars = ['IMAP_SERVER', 'SMTP_SERVER', 'SMTP_PORT', 'EMAIL', 'PASSWORD']
+for var in required_env_vars:
+    if not os.getenv(var):
+        logger.error(f"La variable d'environnement {var} n'est pas définie")
+        sys.exit(1)
+
 # Configuration du logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
