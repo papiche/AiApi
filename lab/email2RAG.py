@@ -47,10 +47,12 @@ except Exception as e:
     sys.exit(1)
 
 def lire_emails(imap_server, email_address, password):
+    logger.info(f"Tentative de connexion au serveur IMAP: {imap_server}")
+    context = ssl.create_default_context()
     try:
-        imap = imaplib.IMAP4_SSL(imap_server)
+        imap = imaplib.IMAP4_SSL(imap_server, context=context)
         imap.login(email_address, password)
-        imap.select("INBOX")
+        logger.info("Login réussi")
 
         _, message_numbers = imap.search(None, "UNSEEN")
 
