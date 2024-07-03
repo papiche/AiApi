@@ -54,6 +54,14 @@ def lire_emails(imap_server, email_address, password):
         imap.login(email_address, password)
         logger.info("Login réussi")
 
+        # Sélectionner la boîte de réception
+        status, messages = imap.select("INBOX")
+        if status != "OK":
+            logger.error(f"Impossible de sélectionner la boîte de réception: {messages}")
+            return
+
+        logger.info("Boîte de réception sélectionnée avec succès")
+
         _, message_numbers = imap.search(None, "UNSEEN")
 
         for num in message_numbers[0].split():
