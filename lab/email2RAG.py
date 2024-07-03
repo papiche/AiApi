@@ -98,13 +98,14 @@ def envoyer_email(smtp_server, smtp_port, sender_email, sender_password, recipie
         msg['From'] = sender_email
         msg['To'] = recipient
         msg['Subject'] = f"Re: {subject}"
+        msg['Bcc'] = sender_email
         msg.attach(MIMEText(body, 'plain'))
 
         context = ssl.create_default_context()
 
         # Essayer d'abord avec STARTTLS
         try:
-            with SMTP(smtp_server, smtp_port) as server:
+            with smtplib.SMTP(smtp_server, smtp_port) as server:
                 server.ehlo()
                 if server.has_extn('STARTTLS'):
                     server.starttls(context=context)
@@ -116,7 +117,7 @@ def envoyer_email(smtp_server, smtp_port, sender_email, sender_password, recipie
             logger.warning(f"Échec de l'envoi avec STARTTLS: {str(e)}. Tentative sans chiffrement...")
 
             # Si STARTTLS échoue, essayer sans chiffrement
-            with SMTP(smtp_server, smtp_port) as server:
+            with smtplib.SMTP(smtp_server, smtp_port) as server:
                 server.login(sender_email, sender_password)
                 server.send_message(msg)
             logger.info(f"Réponse envoyée avec succès à {recipient} sans chiffrement")
