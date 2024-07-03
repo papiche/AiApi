@@ -1,5 +1,3 @@
-import os
-from dotenv import load_dotenv
 import imaplib
 import email
 from email.header import decode_header
@@ -13,7 +11,10 @@ import traceback
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from dotenv import load_dotenv
+import os
 
+# Charger les variables d'environnement depuis le fichier .env
 load_dotenv()
 
 # Configuration du logging
@@ -90,36 +91,38 @@ def envoyer_email(smtp_server, smtp_port, sender_email, sender_password, recipie
         logger.error(f"Erreur lors de l'envoi de l'email à {recipient}: {str(e)}")
         logger.error(traceback.format_exc())
 
-def stocker_exemple_positif(question, reponse):
+def stocker_exemple_positif(question, reponse, utilisateur_id):
     collection.add(
         documents=[f"Q: {question}\nR: {reponse}"],
-        metadatas=[{"type": "exemple_positif"}],
-        ids=[f"exemple_{hash(question)}"]
+        metadatas=[{"type": "exemple_positif", "user_id": utilisateur_id}],
+        ids=[f"exemple_{hash(question)}_{utilisateur_id}"]
     )
-    logger.info("Exemple positif stocké avec succès")
+    logger.info(f"Exemple positif stocké avec succès pour l'utilisateur {utilisateur_id}")
 
-def stocker_exemple_negatif(question):
+def stocker_exemple_negatif(question, utilisateur_id):
     collection.add(
         documents=[f"Q: {question}"],
-        metadatas=[{"type": "exemple_negatif"}],
-        ids=[f"erreur_{hash(question)}"]
+        metadatas=[{"type": "exemple_negatif", "user_id": utilisateur_id}],
+        ids=[f"erreur_{hash(question)}_{utilisateur_id}"]
     )
-    logger.info("Exemple négatif stocké avec succès")
+    logger.info(f"Exemple négatif stocké avec succès pour l'utilisateur {utilisateur_id}")
 
-def generer_reponse(contenu):
+def generer_reponse(contenu, utilisateur_id):
     try:
-        embedding = ollama.embeddings(model="votre_modele_personnel", prompt=contenu)["embedding"]
+        model_name = utilisateur_id  # Utilisation directe de utilisateur_id comme nom du modèle
+
+        embedding = ollama.embeddings(model=model_name, prompt=contenu)["embedding"]
 
         exemples_positifs = collection.query(
             query_embeddings=[embedding],
-            where={"type": "exemple_positif"},
+            where={"type": "exemple_positif", "user_id": utilisateur_id},
             n_results=3
         )
 
         contexte_exemples = "\n".join(exemples_positifs['documents'][0])
 
         prompt = f"Exemples précédents:\n{contexte_exemples}\n\nEmail actuel:\n{contenu}\n\nRéponse:"
-        response = ollama.chat(model='votre_modele_personnel', messages=[
+        response = ollama.chat(model=model_name, messages=[
             {
                 'role': 'system',
                 'content': 'Vous êtes un assistant email intelligent. Utilisez les exemples précédents et le contexte fourni pour générer une réponse pertinente.'
@@ -132,7 +135,7 @@ def generer_reponse(contenu):
 
         return response['message']['content']
     except Exception as e:
-        logger.error(f"Erreur lors de la génération de la réponse: {str(e)}")
+        logger.error(f"Erreur lors de la génération de la réponse pour l'utilisateur {utilisateur_id}: {str(e)}")
         logger.error(traceback.format_exc())
         return "Désolé, une erreur s'est produite lors de la génération de la réponse."
 
@@ -151,7 +154,7 @@ def analyser_erreurs():
         logger.error(f"Erreur lors de l'analyse des erreurs: {str(e)}")
         logger.error(traceback.format_exc())
 
-def traiter_emails_et_appliquer_rag(imap_server, email, password, smtp_server, smtp_port):
+def traiter_emails_et_appliquer_rag(imap_server, email, password, smtp_server, smtp_port, utilisateur_id):
     emails_traites = 0
     try:
         for sujet, contenu in lire_emails(imap_server, email, password):
@@ -160,13 +163,13 @@ def traiter_emails_et_appliquer_rag(imap_server, email, password, smtp_server, s
             expediteur = email.utils.parseaddr(email.message_from_string(contenu)['From'])[1]
 
             if contenu.strip().endswith("OK!"):
-                reponse_generee = generer_reponse(contenu)
-                stocker_exemple_positif(contenu, reponse_generee)
+                reponse_generee = generer_reponse(contenu, utilisateur_id)
+                stocker_exemple_positif(contenu, reponse_generee, utilisateur_id)
             elif contenu.strip().endswith("KO!"):
-                stocker_exemple_negatif(contenu)
+                stocker_exemple_negatif(contenu, utilisateur_id)
                 reponse_generee = "Nous sommes désolés que notre réponse précédente n'ait pas été satisfaisante. Nous allons analyser votre demande pour améliorer notre service."
             else:
-                reponse_generee = generer_reponse(contenu)
+                reponse_generee = generer_reponse(contenu, utilisateur_id)
 
             envoyer_email(smtp_server, smtp_port, email, password, expediteur, sujet, reponse_generee)
 
@@ -182,19 +185,15 @@ if __name__ == "__main__":
     try:
         logger.info("Démarrage du processus de traitement des emails")
 
-        # Configuration des serveurs de messagerie
+        # Charger les variables d'environnement depuis le fichier .env
         IMAP_SERVER = os.getenv("IMAP_SERVER")
         SMTP_SERVER = os.getenv("SMTP_SERVER")
-        SMTP_PORT = int(os.getenv("SMTP_PORT", 587))  # Conversion en int, avec 587 comme valeur par défaut
-        EMAIL = os.getenv("RAGEMAIL")
-        PASSWORD = os.getenv("RAGPASS")
+        SMTP_PORT = int(os.getenv("SMTP_PORT"))
+        EMAIL = os.getenv("EMAIL")
+        PASSWORD = os.getenv("PASSWORD")
+        UTILISATEUR_ID = sys.argv[1] if len(sys.argv) > 1 else "gwen2"
 
-        # Vérification que toutes les variables nécessaires sont définies
-        if not all([IMAP_SERVER, SMTP_SERVER, EMAIL, PASSWORD]):
-            logger.error("Certaines variables d'environnement sont manquantes. Veuillez vérifier votre fichier .env")
-            sys.exit(1)
-
-        traiter_emails_et_appliquer_rag(IMAP_SERVER, EMAIL, PASSWORD, SMTP_SERVER, SMTP_PORT)
+        traiter_emails_et_appliquer_rag(IMAP_SERVER, EMAIL, PASSWORD, SMTP_SERVER, SMTP_PORT, UTILISATEUR_ID)
         logger.info("Fin du processus de traitement des emails")
     except KeyboardInterrupt:
         logger.info("Processus interrompu par l'utilisateur")
