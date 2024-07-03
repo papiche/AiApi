@@ -44,10 +44,10 @@ except Exception as e:
     logger.error(f"Erreur lors de la connexion à ChromaDB: {str(e)}")
     sys.exit(1)
 
-def lire_emails(imap_server, email, password):
+def lire_emails(imap_server, email_address, password):
     try:
         imap = imaplib.IMAP4_SSL(imap_server)
-        imap.login(email, password)
+        imap.login(email_address, password)
         imap.select("INBOX")
 
         _, message_numbers = imap.search(None, "UNSEEN")
@@ -78,6 +78,7 @@ def lire_emails(imap_server, email, password):
     except Exception as e:
         logger.error(f"Erreur inattendue lors de la lecture des emails: {str(e)}")
         logger.error(traceback.format_exc())
+
 
 def envoyer_email(smtp_server, smtp_port, sender_email, sender_password, recipient, subject, body):
     try:
@@ -164,7 +165,7 @@ def analyser_erreurs():
 def traiter_emails_et_appliquer_rag(imap_server, email, password, smtp_server, smtp_port, utilisateur_id):
     emails_traites = 0
     try:
-        for sujet, contenu in lire_emails(imap_server, email, password):
+        for sujet, contenu in lire_emails(imap_server, email_address, password):
             logger.info(f"Traitement de l'email avec le sujet: {sujet}")
 
             expediteur = email.utils.parseaddr(email.message_from_string(contenu)['From'])[1]
