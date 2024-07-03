@@ -9,6 +9,7 @@ from logging.handlers import RotatingFileHandler
 import sys
 import traceback
 import smtplib
+import ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
@@ -89,8 +90,9 @@ def envoyer_email(smtp_server, smtp_port, sender_email, sender_password, recipie
 
         msg.attach(MIMEText(body, 'plain'))
 
+        context = ssl.create_default_context()
         with smtplib.SMTP(smtp_server, smtp_port) as server:
-            server.starttls()
+            server.starttls(context=context)
             server.login(sender_email, sender_password)
             server.send_message(msg)
 
@@ -117,6 +119,12 @@ def stocker_exemple_negatif(question, utilisateur_id):
 
 def generer_reponse(contenu, utilisateur_id):
     try:
+        # Vérifier si le modèle existe
+        models = ollama.list()
+        if utilisateur_id not in [model['name'] for model in models['models']]:
+            logger.error(f"Le modèle {utilisateur_id} n'existe pas dans Ollama")
+            return "Désolé, une erreur s'est produite lors de la génération de la réponse."
+
         model_name = utilisateur_id  # Utilisation directe de utilisateur_id comme nom du modèle
 
         embedding = ollama.embeddings(model=model_name, prompt=contenu)["embedding"]
