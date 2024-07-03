@@ -162,7 +162,7 @@ def analyser_erreurs():
         logger.error(f"Erreur lors de l'analyse des erreurs: {str(e)}")
         logger.error(traceback.format_exc())
 
-def traiter_emails_et_appliquer_rag(imap_server, email, password, smtp_server, smtp_port, utilisateur_id):
+def traiter_emails_et_appliquer_rag(imap_server, email_address, password, smtp_server, smtp_port, utilisateur_id):
     emails_traites = 0
     try:
         for sujet, contenu in lire_emails(imap_server, email_address, password):
