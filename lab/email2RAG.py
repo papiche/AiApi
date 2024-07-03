@@ -81,7 +81,7 @@ def lire_emails(imap_server, email_address, password):
             else:
                 contenu = email_message.get_payload(decode=True).decode()
 
-            yield sujet, contenu
+            yield sujet, contenu, email_message
 
         imap.close()
         imap.logout()
@@ -215,10 +215,9 @@ def analyser_erreurs():
 def traiter_emails_et_appliquer_rag(imap_server, email_address, password, smtp_server, smtp_port, utilisateur_id):
     emails_traites = 0
     try:
-        for sujet, contenu in lire_emails(imap_server, email_address, password):
-            logger.info(f"Traitement de l'email avec le sujet: {sujet}")
-
-            expediteur = email.utils.parseaddr(email.message_from_string(contenu)['From'])[1]
+        for sujet, contenu, email_message in lire_emails(imap_server, email_address, password):
+            expediteur = email.utils.parseaddr(email_message['From'])[1]
+            logger.info(f"Traitement de l'email de {expediteur} avec le sujet: {sujet}")
 
             if contenu.strip().endswith("OK!"):
                 reponse_generee = generer_reponse(sujet, contenu, utilisateur_id)
