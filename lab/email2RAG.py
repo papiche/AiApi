@@ -150,7 +150,7 @@ def stocker_exemple_negatif(question, utilisateur_id):
     )
     logger.info(f"Exemple négatif stocké avec succès pour l'utilisateur {utilisateur_id}")
 
-def generer_reponse(contenu, utilisateur_id):
+def generer_reponse(sujet, contenu, utilisateur_id):
     try:
         model_name = utilisateur_id  # Utilisation directe de utilisateur_id comme nom du modèle
 
@@ -218,13 +218,13 @@ def traiter_emails_et_appliquer_rag(imap_server, email_address, password, smtp_s
             expediteur = email.utils.parseaddr(email.message_from_string(contenu)['From'])[1]
 
             if contenu.strip().endswith("OK!"):
-                reponse_generee = generer_reponse(contenu, utilisateur_id)
+                reponse_generee = generer_reponse(sujet, contenu, utilisateur_id)
                 stocker_exemple_positif(contenu, reponse_generee, utilisateur_id)
             elif contenu.strip().endswith("KO!"):
                 stocker_exemple_negatif(contenu, utilisateur_id)
                 reponse_generee = "Nous sommes désolés que notre réponse précédente n'ait pas été satisfaisante. Nous allons analyser votre demande pour améliorer notre service."
             else:
-                reponse_generee = generer_reponse(contenu, utilisateur_id)
+                reponse_generee = generer_reponse(sujet, contenu, utilisateur_id)
 
             envoyer_email(smtp_server, smtp_port, email_address, password, expediteur, sujet, reponse_generee)
 
