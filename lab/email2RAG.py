@@ -103,7 +103,15 @@ def envoyer_email(smtp_server, smtp_port, sender_email, sender_password, recipie
 
         context = ssl.create_default_context()
 
-        # Essayer d'abord avec STARTTLS
+        try:
+            with smtplib.SMTP_SSL(smtp_server, smtp_port, context=context) as server:
+                server.login(sender_email, sender_password)
+                server.send_message(msg)
+            logger.info(f"Réponse envoyée avec succès à {recipient} en utilisant SSL")
+        except Exception as e:
+            logger.warning(f"Échec de l'envoi avec SSL: {str(e)}. Tentative avec STARTTLS...")
+
+        # Essai avec STARTTLS
         try:
             with smtplib.SMTP(smtp_server, smtp_port) as server:
                 server.ehlo()
@@ -156,7 +164,7 @@ def generer_reponse(contenu, utilisateur_id):
 
         exemples_positifs = collection.query(
             query_embeddings=[embedding],
-            where={"type": "exemple_positif", "user_id": utilisateur_id},
+            where={"$and": [{"type": "exemple_positif"}, {"user_id": utilisateur_id}]},
             n_results=3
         )
 
@@ -212,7 +220,7 @@ def traiter_emails_et_appliquer_rag(imap_server, email_address, password, smtp_s
             else:
                 reponse_generee = generer_reponse(contenu, utilisateur_id)
 
-            envoyer_email(smtp_server, smtp_port, email, password, expediteur, sujet, reponse_generee)
+            envoyer_email(smtp_server, smtp_port, email_address, password, expediteur, sujet, reponse_generee)
 
             emails_traites += 1
             if emails_traites % 100 == 0:
