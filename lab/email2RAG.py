@@ -152,13 +152,6 @@ def stocker_exemple_negatif(question, utilisateur_id):
 
 def generer_reponse(contenu, utilisateur_id):
     try:
-        # Vérifier si le modèle existe
-        models_response = requests.get("http://localhost:11434/api/tags")
-        models = models_response.json()
-        if utilisateur_id not in [model['name'] for model in models['models']]:
-            logger.error(f"Le modèle {utilisateur_id} n'existe pas dans Ollama")
-            return "Désolé, une erreur s'est produite lors de la génération de la réponse."
-
         model_name = utilisateur_id  # Utilisation directe de utilisateur_id comme nom du modèle
 
         # Générer l'embedding
