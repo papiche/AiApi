@@ -178,7 +178,15 @@ def generer_reponse(contenu, utilisateur_id):
             "system": "Vous êtes un assistant email intelligent. Utilisez les exemples précédents et le contexte fourni pour générer une réponse pertinente."
         }
         response = requests.post("http://localhost:11434/api/generate", json=generate_data)
-        return response.json()['response']
+        logger.debug(f"Réponse brute de l'API Ollama : {response.text}")
+        # Tentative de décodage JSON
+        try:
+            response_json = response.json()
+            return response_json['response']
+        except json.JSONDecodeError as json_error:
+            logger.error(f"Erreur de décodage JSON : {str(json_error)}")
+            logger.error(f"Contenu de la réponse : {response.text}")
+            return "Désolé, une erreur s'est produite lors de la génération de la réponse."
 
     except Exception as e:
         logger.error(f"Erreur lors de la génération de la réponse pour l'utilisateur {utilisateur_id}: {str(e)}")
