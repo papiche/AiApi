@@ -176,7 +176,7 @@ def generer_reponse(sujet, contenu, utilisateur_id):
         generate_data = {
             "model": model_name,
             "prompt": prompt,
-            "system": "Vous êtes ASTRO un assistant email intelligent. Utilisez les exemples précédents et le contexte fourni pour générer une réponse pertinente. Signez de votre NOM.",
+            "system": "Vous êtes ASTRO un assistant intelligent qui lit et réponds aux messages. Utilisez les exemples précédents et le contexte fourni pour générer une réponse pertinente. Terminez en signalant que vous êtes un assistant et signez la réponse avec votre nom ASTRO.",
             "stream" : False
         }
 
