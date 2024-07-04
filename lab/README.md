@@ -4,8 +4,18 @@
 
 **email2RAG** est un projet open source visant à démocratiser l'hébergement d'intelligence artificielle (IA) décentralisée en utilisant la puissance de calcul des PC gamers. Ce projet permet à chacun de contribuer à l'hébergement de modèles d'IA de manière distribuée, rendant l'IA plus accessible et moins dépendante des infrastructures centralisées.
 
-Voici un projet d'article de blog pour présenter le code et inviter les propriétaires de PC gamers à participer à l'hébergement décentralisé de l'IA :
+qwen2:latest 2:21 am
 
+
+Voici un script Python qui utilise l'API Ollama pour générer des réponses pour une assistante d'e-mail. Le script commence par lire l'adresse e-mail et le mot de passe de l'utilisateur à partir des variables d'environnement, puis se connecte à un serveur IMAP et récupère tous les nouveaux courriels. Pour chaque courriel, il extrait le sujet et le contenu, puis vérifie si le contenu s'achève par "OK!" ou "KO!". Si le contenu s'achève par "OK!", le script génère une réponse à l'aide de l'API Ollama et la stocke en tant qu'exemple positif pour l'utilisateur. Si le contenu s'achève par "KO!", il stocke le courriel comme exemple négatif et génère une nouvelle réponse.
+
+Le script utilise la bibliothèque imapclient pour se connecter au serveur IMAP, la bibliothèque requests pour faire des requêtes HTTP à l'API Ollama, et la bibliothèque email pour parser les courriels. Il utilise également la fonction de log pour enregistrer des informations sur le traitement de chaque courriel.
+
+La fonction principale de ce script est traiter_emails_et_appliquer_rag qui se connecte au serveur IMAP, lit tous les nouveaux courriels et les traite un à la fois. Elle extrait le sujet et le contenu de chaque courriel, vérifie si il s'achève par "OK!" ou "KO!", et génère une réponse à l'aide de l'API Ollama si nécessaire. Puis elle envoie un e-mail de retour à l'expéditeur avec la réponse générée.
+
+Le script comprend également une fonction appelée analyser_erreurs qui analyse les erreurs survenues lors du traitement des courriels, et une autre nommée stocker_exemple_positif qui stocke un exemple positif pour l'utilisateur dans l'API Ollama. De manière similaire, stocker_exemple_negatif stocke un exemple négatif.
+
+En général, ce script est un bon exemple de la façon dont utiliser l'API Ollama pour générer des réponses pour une assistante d'e-mail. Il utilise les bibliothèques IMAP et HTTP pour se connecter au serveur IMAP et faire des requêtes HTTP à l'API Ollama, et il utilise la bibliothèque email pour parser les courriels. Il comprend également des capacités de gestion des erreurs et d'enregistrement des logs.
 ## Participez à la révolution de l'IA décentralisée avec votre PC gamer !
 
 Vous possédez un PC gamer puissant qui passe une bonne partie de son temps en veille ? Et si vous pouviez l'utiliser pour contribuer à une IA décentralisée et révolutionnaire ? C'est désormais possible grâce au projet email2RAG !
