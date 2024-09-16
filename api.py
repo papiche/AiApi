@@ -22,7 +22,7 @@ def get_mime_type(file: UploadFile):
     mime = magic.Magic()
     mime_type = mime.from_buffer(file.file.read(1024))
     return mime_type
-        
+
 
 @app.get("/")
 def home(request: Request):
@@ -34,24 +34,24 @@ async def create_upload_file(file: UploadFile = File(...)):
     temp_file_path = f"tmp/{file.filename}"
     with open(temp_file_path, "wb") as f:
         f.write(file.file.read())
-        
+
     # Validate file size
     max_file_size = 100 * 1024 * 1024  # 100MB
     if file.file.__sizeof__() > max_file_size:
         subprocess.run(["rm", temp_file_path], check=True)
         raise HTTPException(status_code=400, detail="File size exceeds the limit of 100MB")
-        
+
     # Check the file type
     mime_type = get_mime_type(file)
     print(f"Detected MIME type: {mime_type}")
     # Determine the file type based on MIME type
     file_type = (
-        "text" if mime_type.startswith("text/") 
+        "text" if mime_type.startswith("text/")
         else "video" if mime_type.startswith("video") or "MP4" in mime_type
         else "audio" if mime_type.startswith("Audio") or "MP3" in mime_type
         else "unknown"
     )
-    
+
     # If the file type is unknown, use the file extension
     if file_type == "unknown":
         file_extension = os.path.splitext(file.filename)[1].lower()
@@ -74,15 +74,15 @@ async def create_upload_file(file: UploadFile = File(...)):
     cid = result.stdout.strip().split('\n')[-1]
     print(f"Extracted CID: {cid}")
 
-    # Remove pin 
+    # Remove pin
     subprocess.run(["ipfs", "pin", "rm", cid])
     subprocess.run(["rm", temp_file_path], check=True)
-    	
+
     # Construct the response data
     output = {"cid": cid, "file": file.filename, "file_type": file_type, "mime_type": mime_type}
 
     return output
-    
+
 @app.get("/tellme")
 async def ai_tellme(cid: str):
     curl_data= {
@@ -120,9 +120,9 @@ async def ai_tellme(cid: str):
 
     r = requests.post("http://localhost:11434/api/generate", json=curl_data)
     tellme = r.json()['response']
-    
+
     print(tellme)
-    
+
     output = {"system" : curl_data['system'], "prompt" : curl_data['prompt'], "tellme" : tellme}
     return output
 
@@ -139,7 +139,7 @@ async def ai_stt(cid: str, file: str):
         print(f"Error running IPFS get: {e}")
         raise HTTPException(status_code=500, detail="Error running IPFS get command")
 
-	## unpin ipfs get 
+    ## unpin ipfs get
     subprocess.run(["ipfs", "pin", "rm", cid])
 
     ## SPEECH TO TEXT
@@ -182,8 +182,8 @@ async def ai_tube(url: str, pubkey: str):
         logs.append(f"Error converting video duration: {e}")
         return {"error": "Failed to convert video duration", "logs": logs}
 
-    # Check if the video is less than 15 minutes (900 seconds)
-    if duration_seconds > 900:
+    # Check if the video is less than 40 minutes (2400 seconds)
+    if duration_seconds > 2400:
         logs.append("Video is too long")
         return {"error": "Video is too long. Please provide a video shorter than 15 minutes.", "logs": logs}
 
@@ -214,7 +214,7 @@ async def ai_tube(url: str, pubkey: str):
     cid = result.stdout.strip().split('\n')[-1]
     print(f"Extracted CID: {cid}")
 
-    # Remove pin 
+    # Remove pin
     subprocess.run(["ipfs", "pin", "rm", cid])
     subprocess.run(["rm", "tmp/videodl.mp4"], check=True)
 
