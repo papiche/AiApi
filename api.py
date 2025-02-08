@@ -287,12 +287,23 @@ def start_recording():
     if recording_process:
         raise HTTPException(status_code=400, detail="Recording is already in progress.")
 
-    # Start OBS Studio recording and store the process object
-    getlog = subprocess.run(["obs-cmd", "--websocket", "obsws://127.0.0.1:4455/cUupyLMSTXuSEIpc", 'recording', 'start'], capture_output=True, text=True)
-    print(getlog)
-    recording_process = True
+    # Exécution de la commande OBS
+    getlog = subprocess.run(
+        ["obs-cmd", "--websocket", "obsws://127.0.0.1:4455/cUupyLMSTXuSEIpc", "recording", "start"],
+        capture_output=True,
+        text=True
+    )
 
-    return {"message": "Recording started successfully."}
+    # Vérification du code de retour
+    if getlog.returncode != 0:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to start recording. Error: {getlog.stderr.strip()}"
+        )
+
+    # Si tout va bien, on change l'état et retourne un message
+    recording_process = True
+    return {"message": "Recording started successfully.", "output": getlog.stdout.strip()}
 
 @app.get("/stop")
 def stop_recording():
